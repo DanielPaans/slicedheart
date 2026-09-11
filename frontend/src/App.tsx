@@ -25,14 +25,14 @@ export const App: React.FC = () => {
 
   // Dynamic Fragments State (Fetched from Flask API)
   const [fragments, setFragments] = useState<FragmentItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [_, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch fragments from Flask backend
   const fetchFragments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/api/fragments');
+      const response = await fetch('http://127.0.0.1:5000/api/fragments');
       if (!response.ok) {
         throw new Error(`Server returned status ${response.status}`);
       }

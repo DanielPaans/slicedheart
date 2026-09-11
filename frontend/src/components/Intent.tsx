@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IntentType, FragmentItem, ChapterItem } from '../types/archive';
+import type { IntentType } from '../types/archive';
 
 interface IntentProps {
   onSelectIntent: (intent: IntentType) => void;

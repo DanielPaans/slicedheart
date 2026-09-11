@@ -1,0 +1,17 @@
+[Unit]
+Description=Cloudflare Tunnel
+Requires=slicedheart-pod.service
+After=slicedheart-pod.service
+
+[Container]
+ContainerName=cloudflared
+Image=docker.io/cloudflare/cloudflared:latest
+Pod=slicedheart.pod
+
+Exec=tunnel --no-autoupdate run --token eyJhIjoiMjY2NzI5NWUyZjM2Yzg1MjI4NDExMzY5MjhjYWRjYTAiLCJ0IjoiNmVlMTkyM2YtN2M4OS00NDE5LWFlNWItNDQ3YzMxMmM0ZTczIiwicyI6IlltSXdObUU1WVdRdE5UWmlZeTAwWVRGbExUa3dPRFV0WVRkbE1HSmhOemsyWm1FMyJ9
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

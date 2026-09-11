@@ -14,8 +14,7 @@ export const Archive: React.FC<ArchiveProps> = ({
   fragments,
   visited,
   currentIntent,
-  onOpenFragment,
-  onOpenChapter
+  onOpenFragment
 }) => {
   const [shakingId, setShakingId] = useState<string | null>(null);
 

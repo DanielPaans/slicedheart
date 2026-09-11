@@ -20,7 +20,7 @@ export const Gate: React.FC<GateProps> = ({ onEnter }) => {
         setGlitchText(
           original
             .split('')
-            .map((c, i) => (i < iterations ? original[i] : chars[Math.floor(Math.random() * chars.length)]))
+            .map((_, i) => (i < iterations ? original[i] : chars[Math.floor(Math.random() * chars.length)]))
             .join('')
         );
         iterations += 1 / 2;

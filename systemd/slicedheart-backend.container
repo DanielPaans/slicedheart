@@ -1,0 +1,17 @@
+[Unit]
+Description=SlicedHeart Backend Flask Service
+After=slicedheart-pod.service
+
+[Container]
+ContainerName=slicedheart-backend
+Image=localhost/slicedheart-backend
+Pod=slicedheart.pod
+Environment=FLASK_ENV=production
+Environment=PORT=5000
+PodmanArgs=--shm-size=2g
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

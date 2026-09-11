@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IntentType, FragmentItem, ChapterItem } from '../types/archive';
+import type { FragmentItem, ChapterItem } from '../types/archive';
 
 interface FragmentReaderProps {
   item: FragmentItem | ChapterItem | null;

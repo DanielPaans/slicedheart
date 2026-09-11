@@ -1,0 +1,31 @@
+FROM docker.io/library/python:3.11-slim
+
+# Prevent Python from writing .pyc files & enable unbuffered logging
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Install Chromium, Chromedriver, and system dependencies for Selenium
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    chromium-driver \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Chrome environment variables so Selenium finds chromium automatically
+ENV CHROME_BIN=/usr/bin/chromium \
+    CHROMEDRIVER_PATH=/usr/bin/chromedriver
+
+WORKDIR /app
+
+# Install Python dependencies globally
+COPY requirements.txt .
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Expose Flask default port
+EXPOSE 5000
+
+# Execute gunicorn via python -m to guarantee PATH resolution works
+CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "app:app"]

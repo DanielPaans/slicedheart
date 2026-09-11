@@ -1,4 +1,4 @@
-import type { IntentType, FragmentItem, ChapterItem } from '../types/archive';
+import type { FragmentItem, ChapterItem } from '../types/archive';
 
 export const FRAGMENTS: FragmentItem[] = [];
 

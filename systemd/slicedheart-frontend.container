@@ -1,0 +1,14 @@
+[Unit]
+Description=SlicedHeart Frontend Nginx Service
+After=slicedheart-pod.service
+
+[Container]
+ContainerName=slicedheart-frontend
+Image=localhost/slicedheart-frontend
+Pod=slicedheart.pod
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
