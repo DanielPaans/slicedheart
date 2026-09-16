@@ -119,6 +119,7 @@ echo "📝 Creating frontend .env file..."
 cat << ENV > "${TARGET_DIR}/frontend/.env"
 # Don't edit these here - they are generated from slicedheart_vars.conf
 PORT=${PROD_FRONTEND_PORT}
+ALLOWED_HOSTS=${PROD_DOMAIN},www.${PROD_DOMAIN}
 ENV
 
 chmod 600 "${TARGET_DIR}/backend/.env"

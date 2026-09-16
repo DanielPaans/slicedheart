@@ -1,6 +1,6 @@
 [Pod]
 PodName=slicedheart
-PublishPort=${MAIN_PORT}:${MAIN_PORT}
+PublishPort=${MAIN_PORT}:${FRONTEND_PORT}
 
 [Install]
 WantedBy=default.target
