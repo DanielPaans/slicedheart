@@ -1,0 +1,221 @@
+#!/bin/bash
+
+set -e
+
+RESTART_POD=false
+
+# ============================================================
+# 1. LOAD PRODUCTION VARIABLES
+# ============================================================
+
+if [ -f "./slicedheart.env" ]; then
+    source ./slicedheart.env
+else
+    echo "⚠️  No slicedheart.env found. Exiting"
+    exit 1
+fi
+
+
+# ============================================================
+# 2. PARSE ARGUMENTS
+# ============================================================
+
+while getopts "r" opt; do
+    case $opt in
+        r)
+            RESTART_POD=true
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+    esac
+done
+
+
+# ============================================================
+# 3. CONFIGURATION
+# ============================================================
+
+REPO_URL="git@github.com:DanielPaans/slicedheart.git"
+
+USER_HOME="/home/$(whoami)"
+TARGET_DIR="${USER_HOME}/slicedheart"
+
+SYSTEMD_DIR="${USER_HOME}/.config/containers/systemd"
+ENV_DIR="${USER_HOME}/.config/environment.d"
+
+MAIN_PORT="${PROD_MAIN_PORT}"
+BACKEND_PORT="${PROD_BACKEND_PORT}"
+FRONTEND_PORT="${PROD_FRONTEND_PORT}"
+
+
+echo "🚀 Starting SlicedHeart Production Setup..."
+echo "   Repository: ${REPO_URL}"
+echo "   Target:     ${TARGET_DIR}"
+echo "   Main port:  ${MAIN_PORT}"
+echo "   Backend:    ${BACKEND_PORT}"
+echo "   Frontend:   ${FRONTEND_PORT}"
+
+
+# ============================================================
+# 4. INSTALL PODMAN
+# ============================================================
+
+if ! command -v podman &> /dev/null; then
+    echo "📦 Installing Podman..."
+
+    sudo apt update
+    sudo apt install -y podman
+else
+    echo "✅ Podman already installed."
+fi
+
+
+# ============================================================
+# 5. CLONE / UPDATE REPOSITORY
+# ============================================================
+
+if [ ! -d "${TARGET_DIR}/.git" ]; then
+    echo "📥 Cloning SlicedHeart repository..."
+
+    mkdir -p "$(dirname "${TARGET_DIR}")"
+
+    ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+    git clone "${REPO_URL}" "${TARGET_DIR}"
+else
+    echo "🔄 Pulling latest changes..."
+
+    cd "${TARGET_DIR}"
+    git pull
+fi
+
+
+# ============================================================
+# 6. GENERATE SYSTEMD ENVIRONMENT
+# ============================================================
+
+echo "📝 Generating environment variables..."
+
+mkdir -p "${ENV_DIR}"
+
+cat << VAR > "${ENV_DIR}/slicedheart_vars.conf"
+# Don't edit this file directly.
+# Generated from prod_vars.env by deploy.sh
+
+MAIN_PORT=${MAIN_PORT}
+BACKEND_PORT=${BACKEND_PORT}
+FRONTEND_PORT=${FRONTEND_PORT}
+VAR
+
+echo "📝 Creating backend .env file..."
+cat << ENV > "${TARGET_DIR}/backend/.env"
+# Don't edit these here - they are generated from slicedheart_vars.conf
+PORT=${PROD_BACKEND_PORT}
+ENV
+
+echo "📝 Creating frontend .env file..."
+cat << ENV > "${TARGET_DIR}/frontend/.env"
+# Don't edit these here - they are generated from slicedheart_vars.conf
+PORT=${PROD_FRONTEND_PORT}
+ENV
+
+chmod 600 "${TARGET_DIR}/backend/.env"
+chmod 600 "${TARGET_DIR}/frontend/.env"
+
+# ============================================================
+# 7. COPY QUADLET FILES
+# ============================================================
+
+echo "🔗 Installing Quadlet files..."
+
+mkdir -p "${SYSTEMD_DIR}"
+
+find "${TARGET_DIR}/systemd" \
+    -maxdepth 1 \
+    -type f \
+    -exec cp {} "${SYSTEMD_DIR}/" \;
+
+
+# ============================================================
+# 8. CUSTOMIZE QUADLETS
+# ============================================================
+
+echo "📍 Configuring paths and ports..."
+
+# Replace project path
+sed -i \
+    "s|%h/slicedheart|${TARGET_DIR}|g" \
+    "${SYSTEMD_DIR}/"*
+
+
+# Replace environment variables
+sed -i \
+    "s|\${MAIN_PORT}|${MAIN_PORT}|g" \
+    "${SYSTEMD_DIR}/"*
+
+sed -i \
+    "s|\${BACKEND_PORT}|${BACKEND_PORT}|g" \
+    "${SYSTEMD_DIR}/"*
+
+sed -i \
+    "s|\${FRONTEND_PORT}|${FRONTEND_PORT}|g" \
+    "${SYSTEMD_DIR}/"*
+
+
+# ============================================================
+# 9. BUILD IMAGES
+# ============================================================
+
+echo "🔨 Building backend image..."
+
+podman build \
+    -t localhost/slicedheart-backend \
+    "${TARGET_DIR}/backend"
+
+
+echo "🔨 Building frontend image..."
+
+podman build \
+    -t localhost/slicedheart-frontend \
+    "${TARGET_DIR}/frontend"
+
+
+# ============================================================
+# 10. ENABLE USER SERVICES
+# ============================================================
+
+echo "⚙️ Configuring systemd..."
+
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+
+sudo loginctl enable-linger "$(whoami)"
+
+systemctl --user daemon-reexec
+systemctl --user daemon-reload
+
+
+# ============================================================
+# 11. RESTART
+# ============================================================
+
+echo ""
+echo "✅ SlicedHeart production environment configured!"
+
+if [ "$RESTART_POD" = true ]; then
+
+    echo "🔄 Restart flag detected."
+    echo "   Restarting SlicedHeart..."
+
+    systemctl --user restart slicedheart-pod.service
+
+    echo "✅ SlicedHeart pod restarted successfully."
+
+else
+
+    echo "⏩ Skipping restart."
+    echo "   Use './deploy.sh -r' to restart the pod."
+
+fi

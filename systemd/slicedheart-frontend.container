@@ -1,6 +1,7 @@
 [Unit]
-Description=SlicedHeart Frontend Nginx Service
-After=slicedheart-pod.service
+Description=SlicedHeart Frontend
+After=slicedheart-pod.service slicedheart-backend.service
+Requires=slicedheart-backend.service
 
 [Container]
 ContainerName=slicedheart-frontend
@@ -9,6 +10,9 @@ Pod=slicedheart.pod
 
 [Service]
 Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60s
+StartLimitBurst=5
 
 [Install]
 WantedBy=default.target

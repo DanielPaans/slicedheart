@@ -32,7 +32,7 @@ export const App: React.FC = () => {
   const fetchFragments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:5000/api/fragments');
+      const response = await fetch('/api/fragments');
       if (!response.ok) {
         throw new Error(`Server returned status ${response.status}`);
       }

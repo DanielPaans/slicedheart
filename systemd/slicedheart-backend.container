@@ -7,11 +7,14 @@ ContainerName=slicedheart-backend
 Image=localhost/slicedheart-backend
 Pod=slicedheart.pod
 Environment=FLASK_ENV=production
-Environment=PORT=5000
+Environment=PORT=${BACKEND_PORT}
 PodmanArgs=--shm-size=2g
 
 [Service]
 Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60s
+StartLimitBurst=5
 
 [Install]
 WantedBy=default.target
