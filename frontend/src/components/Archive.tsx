@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import type { IntentType, FragmentItem, ChapterItem } from '../types/archive';
+import type { IntentType, FragmentItem } from '../types/archive';
 
 interface ArchiveProps {
   fragments: FragmentItem[];
-  chapter: ChapterItem[];
   visited: Record<string, boolean>;
   currentIntent: IntentType | null;
   onOpenFragment: (id: string) => void;
-  onOpenChapter: () => void;
 }
 
 export const Archive: React.FC<ArchiveProps> = ({

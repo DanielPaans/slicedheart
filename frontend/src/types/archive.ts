@@ -16,16 +16,3 @@ export interface FragmentItem {
   note?: string;
   scrawl?: string;
 }
-
-export interface ChapterPart {
-  t: string;
-  d: string;
-}
-
-export interface ChapterItem {
-  id: string;
-  title: string;
-  category: Category;
-  tag: string;
-  parts: ChapterPart[];
-}

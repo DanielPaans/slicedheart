@@ -1,18 +1,14 @@
 import React from 'react';
-import type { FragmentItem, ChapterItem } from '../types/archive';
+import type { FragmentItem } from '../types/archive';
 
 interface FragmentReaderProps {
-  item: FragmentItem | ChapterItem | null;
-  isChapter?: boolean;
+  item: FragmentItem | null;
   onBack: () => void;
-  onPlayPart?: (partTitle: string) => void;
 }
 
 export const FragmentReader: React.FC<FragmentReaderProps> = ({
   item,
-  isChapter = false,
   onBack,
-  onPlayPart
 }) => {
   if (!item) return null;
 
@@ -28,37 +24,6 @@ export const FragmentReader: React.FC<FragmentReaderProps> = ({
       <path d="M50 20 L45 40 L55 45 L42 68" fill="none" stroke="#e8e0cc" strokeWidth="1.6" opacity="0.7" />
     </svg>
   );
-
-  if (isChapter) {
-    const chap = item as ChapterItem;
-    return (
-      <section id="fragment" className="screen active">
-        <div className="frag-scroll">
-          <div className="frag-wrap">
-            <button className="frag-close" onClick={onBack}>
-              &larr; back to the archive
-            </button>
-            <div className="art-slot">
-              <div className="art-heart">{renderHeartSvg()}</div>
-            </div>
-            <div className="frag-headline">{chap.title}</div>
-            <div className="frag-sub">{chap.tag}</div>
-            <div className="chapter-parts">
-              {chap.parts.map((p, i) => (
-                <div key={i} className="chapter-part" onClick={() => onPlayPart?.(p.t)}>
-                  <div>
-                    <div className="pt-title">{p.t}</div>
-                    <div>{p.d}</div>
-                  </div>
-                  <span>open &rarr;</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   const frag = item as FragmentItem;
   

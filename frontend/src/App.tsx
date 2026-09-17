@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 // Styles & Data
 import './App.css';
-import { FRAGMENTS, CHAPTER } from './data/fragments';
-import type { IntentType, FragmentItem, ChapterItem } from './types/archive';
+import { FRAGMENTS } from './data/fragments';
+import type { IntentType, FragmentItem } from './types/archive';
 
 // Components
 import { Gate } from './components/Gate';
@@ -20,8 +20,7 @@ export const App: React.FC = () => {
   const [visited, setVisited] = useState<Record<string, boolean>>({});
 
   // Active Reader Item State
-  const [selectedItem, setSelectedItem] = useState<FragmentItem | ChapterItem | null>(null);
-  const [isChapter, setIsChapter] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<FragmentItem | null>(null);
 
   // Dynamic Fragments State (Fetched from Flask API)
   const [fragments, setFragments] = useState<FragmentItem[]>([]);
@@ -73,7 +72,6 @@ export const App: React.FC = () => {
 
     setVisited((prev) => ({ ...prev, [id]: true }));
     setSelectedItem(frag);
-    setIsChapter(false);
     setCurrentScreen('fragment');
 
     // Update Dock
@@ -81,21 +79,6 @@ export const App: React.FC = () => {
     setDockSub(` fragment_${frag.id}`);
     setDockSpotify(frag.spotify);
     setDockLink(frag.spotifyLink);
-    setDockOpen(true);
-  };
-
-  const openChapter = () => {
-    setVisited((prev) => ({ ...prev, NA: true }));
-    setSelectedItem(CHAPTER);
-    setIsChapter(true);
-    setCurrentScreen('fragment');
-  };
-
-  const openDockCustomPart = (partTitle: string) => {
-    setDockTitle(partTitle);
-    setDockSub(` NEVER AGAIN — ${partTitle}`);
-    setDockSpotify(null);
-    setDockLink('https://open.spotify.com/artist/5UQfPgBcqFOA5pZxduU04i');
     setDockOpen(true);
   };
 
@@ -117,20 +100,16 @@ export const App: React.FC = () => {
       {currentScreen === 'archive' && (
         <Archive
           fragments={fragments}
-          chapter={[CHAPTER]}
           visited={visited}
           currentIntent={currentIntent}
           onOpenFragment={openFragment}
-          onOpenChapter={openChapter}
         />
       )}
 
       {currentScreen === 'fragment' && selectedItem && (
         <FragmentReader
           item={selectedItem}
-          isChapter={isChapter}
           onBack={() => setCurrentScreen('archive')}
-          onPlayPart={openDockCustomPart}
         />
       )}
 
