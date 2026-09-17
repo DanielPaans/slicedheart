@@ -64,15 +64,21 @@ def get_id_from_url(url):
 
 def open_playlist_in_browser(playlist_url):
     options = webdriver.ChromeOptions()
-    options.add_argument("--start-maximized")
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
+
+    options.add_argument("--window-size=1920,1080")
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-gpu")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     options.add_argument("--user-data-dir=/tmp/selenium-profile")
     options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
         
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+    })
     driver.execute_cdp_cmd("Network.enable", {})
 
     artist_id = get_id_from_url(playlist_url)
@@ -81,8 +87,13 @@ def open_playlist_in_browser(playlist_url):
         print(f"Opening URL: {playlist_url}")
         driver.get(playlist_url)
 
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "main"))
+        )
+
         # Allow initial render and trigger scroll to guarantee GraphQL request fires
-        time.sleep(3)
+        driver.execute_script("window.scrollTo(0, 800);")
+        time.sleep(2)
         driver.execute_script("window.scrollTo(0, 300);")
         time.sleep(3)
 
