@@ -248,6 +248,8 @@ button { font-family: inherit; cursor: pointer; background: none; border: none; 
 .frag-card.ep { grid-column: span 2; }
 .frag-card.album .frag-title { font-size: 30px; }
 .frag-card.ep .frag-title { font-size: 30px; }
+.frag-card.new { grid-column: span 3; grid-row: span 2; }
+.frag-card.new .frag-title { font-size: 60px; }
 
 /* Background image overlay with low opacity for subtle aesthetic */
 .frag-card-bg {
