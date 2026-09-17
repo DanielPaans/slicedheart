@@ -115,7 +115,7 @@ export const Archive: React.FC<ArchiveProps> = ({
 
                 <div className="frag-content" data-text={fragment.title}>
                   <div className="frag-code">
-                    fragment_{fragment.code || fragment.id} · {isAlbum ? 'album' : 'track'}
+                    {fragment.code} · {isAlbum ? 'album' : 'track'}
                   </div>
 
                   <div className="frag-title" data-title={fragment.title}>{fragment.title}</div>

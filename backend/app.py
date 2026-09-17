@@ -138,7 +138,7 @@ def extract_albums_from_graphql(data):
 
         for item in discography_items:
             releases = item.get("releases", {}).get("items", [])
-            for release in releases:
+            for release in releases[::-1]:  # Reverse to prioritize latest releases
                 release_id = release.get("id")
                 name = release.get("name")
                 
@@ -210,7 +210,7 @@ def run_scraper_job():
                 "note": "Scraped from discography page.",
                 "scrawl": "added dynamically via python scraper."
             }
-            current_fragments.insert(0, new_fragment)
+            current_fragments.append(new_fragment)
             updated = True
             print(f"[+] Added new fragment: {item['name']}")
 
