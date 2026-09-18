@@ -1,12 +1,14 @@
 import json
 import random
 import re
+import tempfile
 import time
 import os
+import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
-import requests
+from datetime import datetime
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -64,18 +66,30 @@ def get_id_from_url(url):
 
 def open_playlist_in_browser(playlist_url):
     options = webdriver.ChromeOptions()
+
+    options.binary_location = "/usr/bin/chromium"
+
     options.add_argument("--headless=new")
 
     options.add_argument("--window-size=1920,1080")
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-gpu")
+    options.add_argument('--remote-debugging-pipe')
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     options.add_argument("--user-data-dir=/tmp/selenium-profile")
     options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
-        
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    user_data_dir = tempfile.mkdtemp()
+    options.add_argument(f"--user-data-dir={user_data_dir}")
+    options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+    
+    # Use system-installed chromedriver directly
+    service = Service(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=options)
+
+    
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
         "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     })
@@ -237,14 +251,17 @@ def trigger_scrape():
 # ==========================================
 # STARTUP & SCHEDULER
 # ==========================================
-if __name__ == "__main__":
-    # Schedule background scraper (e.g. run every 6 hours)
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=run_scraper_job, trigger="interval", hours=6)
-    scheduler.start()
+scheduler = BackgroundScheduler()
+def start_scheduler():
+    if not scheduler.running:
+        scheduler.add_job(func=run_scraper_job, trigger="interval", days=1, next_run_time=datetime.now())
+        scheduler.start()
+        print("[Scheduler] Started background scraper scheduler.")
 
-    # Run initial scrape on server start
+# Execute scheduler start upon module load by Gunicorn
+start_scheduler()
+
+if __name__ == "__main__":
     run_scraper_job()
 
-    # Run Flask server
     app.run(port=5000, debug=True, use_reloader=False)
