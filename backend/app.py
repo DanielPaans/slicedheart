@@ -67,10 +67,24 @@ def get_id_from_url(url):
 def open_playlist_in_browser(playlist_url):
     options = webdriver.ChromeOptions()
 
-    options.binary_location = "/usr/bin/chromium"
+    chrome_bin = os.getenv("CHROME_BIN")
+    chromedriver_path = os.getenv("CHROMEDRIVER_PATH")
+    is_container = bool(chrome_bin and chromedriver_path)
+
+    if is_container:
+        options.binary_location = chromedriver_path
+        user_data_dir = tempfile.mkdtemp()
+        options.add_argument(f"--user-data-dir={user_data_dir}")
+
+        service = Service(executable_path=chromedriver_path)
+
+    else:
+        # options.add_argument("--user-data-dir=/tmp/selenium-profile")
+        service = Service(ChromeDriverManager().install())
+
+    options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
 
     options.add_argument("--headless=new")
-
     options.add_argument("--window-size=1920,1080")
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -78,16 +92,10 @@ def open_playlist_in_browser(playlist_url):
     options.add_argument('--remote-debugging-pipe')
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    options.add_argument("--user-data-dir=/tmp/selenium-profile")
     options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
 
-    user_data_dir = tempfile.mkdtemp()
-    options.add_argument(f"--user-data-dir={user_data_dir}")
-    options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
-    
-    # Use system-installed chromedriver directly
-    service = Service(executable_path="/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
+
 
     
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
@@ -262,6 +270,4 @@ def start_scheduler():
 start_scheduler()
 
 if __name__ == "__main__":
-    run_scraper_job()
-
     app.run(port=5000, debug=True, use_reloader=False)
