@@ -72,7 +72,8 @@ def open_playlist_in_browser(playlist_url):
     is_container = bool(chrome_bin and chromedriver_path)
 
     if is_container:
-        options.binary_location = chromedriver_path
+        options.binary_location = chrome_bin
+        
         user_data_dir = tempfile.mkdtemp()
         options.add_argument(f"--user-data-dir={user_data_dir}")
 
@@ -89,7 +90,6 @@ def open_playlist_in_browser(playlist_url):
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-gpu")
-    options.add_argument('--remote-debugging-pipe')
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
