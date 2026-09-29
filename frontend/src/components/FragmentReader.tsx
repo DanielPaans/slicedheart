@@ -29,9 +29,9 @@ export const FragmentReader: React.FC<FragmentReaderProps> = ({
   
   // Calculate integrity loss & glitch conditions
   const integrity = frag.integrity ?? 100;
-  const isGlitchy = integrity < 75;
+  const isGlitchy = integrity < 75 && !frag.isNew;
   const distortionAmount = Math.max(0, (100 - integrity) / 100); // 0.0 (high integrity) to 1.0 (corrupted)
-  const showCoverArt = Boolean(frag.coverArt && integrity >= 50);
+  const showCoverArt = frag.type === 'ALBUM' || frag.isNew || Boolean(frag.coverArt && integrity >= 50);
 
   const isAlbumOrEP = frag.type === 'ALBUM' || frag.type === 'EP';
   const playerHeight = isAlbumOrEP ? "380" : "152";
@@ -65,7 +65,7 @@ export const FragmentReader: React.FC<FragmentReaderProps> = ({
               <div className="art-heart">{renderHeartSvg()}</div>
             )}
             <div className="art-code-overlay">
-              fragment_{frag.code || frag.id} · recovered {frag.recovered}
+              {frag.code} · recovered {frag.recovered}
             </div>
           </div>
 
@@ -74,7 +74,14 @@ export const FragmentReader: React.FC<FragmentReaderProps> = ({
             <div 
               className={`frag-headline ${isGlitchy ? 'frag-glitch' : ''}`}
             >
-              <span className="frag-title" data-title={frag.title}>
+              <span 
+                className="frag-title"
+                data-title={frag.title}
+                style={{ 
+                  fontSize: '60px', 
+                  'marginTop': '20px' 
+                }}
+              >
                 {frag.title}
               </span>
             </div>

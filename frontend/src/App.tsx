@@ -38,7 +38,8 @@ export const App: React.FC = () => {
       const data: FragmentItem[] = await response.json();
       
       // Fallback to static FRAGMENTS if local database is empty
-      setFragments(data.length > 0 ? data : FRAGMENTS);
+      const fetchedData = data.length > 0 ? data : FRAGMENTS;
+      setFragments(fetchedData.toReversed());
       setError(null);
     } catch (err) {
       console.error('Failed to load fragments:', err);

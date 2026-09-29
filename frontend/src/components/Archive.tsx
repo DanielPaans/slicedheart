@@ -23,15 +23,6 @@ export const Archive: React.FC<ArchiveProps> = ({
     unknown: "you didn't know. neither did it, when it made this."
   };
 
-  const checkMonthGap = (recoveredDate: Date) => {
-    const RELEASE_GAP_MONTHS = 2;
-
-    const cutoffDate = new Date();
-    cutoffDate.setMonth(cutoffDate.getMonth() - RELEASE_GAP_MONTHS);
-
-    return recoveredDate >= cutoffDate;
-  };
-
   const getBar = (count: number, max: number) => {
     const filledCount = Math.min(Math.round((count / max) * 10), 10);
     const filled = '█'.repeat(filledCount);
@@ -88,9 +79,9 @@ export const Archive: React.FC<ArchiveProps> = ({
 
             {/* Fragments */}
             {fragments.map((fragment, index) => {
+              const isNEW = fragment.isNew;
               const isAlbum = fragment.type === 'ALBUM';
               const isEP = fragment.type === 'EP';
-              const isNEW = checkMonthGap(new Date(fragment.recovered));
               
               const hasBackground = Boolean(fragment.coverArt && (isAlbum || isEP || isNEW || fragment.integrity > 80));
               const isGlitchy = fragment.integrity < 75;
@@ -103,9 +94,7 @@ export const Archive: React.FC<ArchiveProps> = ({
                 <button
                   key={fragment.id}
                   className={`frag-card 
-                    ${isAlbum ? 'album' : ''} 
-                    ${isEP ? 'ep' : ''}
-                    ${isNEW ? 'new' : ''}
+                    ${isNEW ? 'new' : isEP ? 'ep' : isAlbum ? 'album' : ''}
                     ${isGlitchy ? 'frag-glitch' : ''} 
                     ${visited[fragment.id] ? 'visited' : ''}`}
                   onClick={() => onOpenFragment(fragment.id)}
@@ -123,7 +112,7 @@ export const Archive: React.FC<ArchiveProps> = ({
                   />
                 )}
 
-                {isAlbum && <span className="album-badge">FULL ALBUM</span> || isEP && <span className="album-badge">FULL EP </span> || isNEW && <span className="album-badge">NEW RELEASE</span>}
+                { isNEW && <span className="album-badge">NEW RELEASE</span> || isAlbum && <span className="album-badge">FULL ALBUM</span> || isEP && <span className="album-badge">FULL EP </span> }
 
                 <div className="frag-content" data-text={fragment.title}>
                   <div className="frag-code">

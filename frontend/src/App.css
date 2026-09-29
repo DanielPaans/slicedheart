@@ -248,7 +248,7 @@ button { font-family: inherit; cursor: pointer; background: none; border: none; 
 .frag-card.ep { grid-column: span 2; }
 .frag-card.album .frag-title { font-size: 30px; }
 .frag-card.ep .frag-title { font-size: 30px; }
-.frag-card.new { grid-column: span 3; grid-row: span 2; }
+.frag-card.new { grid-column: span 4; grid-row: span 2; }
 .frag-card.new .frag-title { font-size: 60px; }
 
 /* Background image overlay with low opacity for subtle aesthetic */
@@ -405,6 +405,11 @@ KEYFRAME ANIMATIONS
   89% { opacity: 0.4; transform: scale(1.08) skewX(5deg); }
   91% { opacity: 0.05; transform: scale(0.95); }
 }
+
+@media (max-width:560px){
+  .frag-card { grid-column: span 3; }
+}
+
 
 .about-block {
   margin-top: 40px; padding: 18px; border: 1px solid var(--line);

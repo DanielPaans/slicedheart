@@ -8,7 +8,7 @@ import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -160,7 +160,7 @@ def extract_albums_from_graphql(data):
 
         for item in discography_items:
             releases = item.get("releases", {}).get("items", [])
-            for release in releases[::-1]:  # Reverse to prioritize latest releases
+            for release in releases:
                 release_id = release.get("id")
                 name = release.get("name")
                 
@@ -182,7 +182,7 @@ def extract_albums_from_graphql(data):
                     image_url = sources[0].get("url")
 
                 if release_id and name:
-                    results.append({
+                    results.insert(0, {
                         "id": release_id,
                         "name": name,
                         "type": release.get("type", "SINGLE"),
@@ -195,9 +195,40 @@ def extract_albums_from_graphql(data):
 
     return results
 
+def check_is_new(release_date_str: str) -> bool:
+    """Returns True if the release date is within the last 60 days (~2 months)."""
+    try:
+        # ISO string format standard: YYYY-MM-DD
+        release_date = datetime.strptime(release_date_str, "%Y-%m-%d")
+        cutoff_date = datetime.now() - timedelta(days=60)
+        return release_date >= cutoff_date
+    except (ValueError, TypeError):
+        return False
+    
+def build_fragment_object(index, item):
+    """Formats a scraped release into a fragment dict."""
+    frag_num = str(index + 1).zfill(3)
+    release_date = item.get("release_date", "")
+
+    return {
+        "id": frag_num,
+        "code": f"fragment_{frag_num}",
+        "title": item["name"],
+        "category": "songs",
+        "recovered": release_date,
+        "integrity": random.randint(10, 100),
+        "type": item.get("type", "SINGLE"),
+        "coverArt": item.get("cover_art"),
+        "spotify": f"https://open.spotify.com/embed/album/{item['id']}?utm_source=generator&theme=0",
+        "spotifyLink": f"https://open.spotify.com/album/{item['id']}",
+        "note": "Scraped from discography page.",
+        "scrawl": "added dynamically via python scraper.",
+        "isNew": check_is_new(release_date)
+    }
+
 def run_scraper_job():
-    """Main task to scrape Spotify, compare with local JSON, and save new items."""
-    print("[Scraper Task] Checking for new releases...")
+    """Scrapes Spotify and creates a brand-new JSON file if differences exist."""
+    print("[Scraper Task] Checking for updates...")
     api_url, headers, post_data = open_playlist_in_browser(TARGET_ARTIST_URL)
     
     if not api_url:
@@ -208,39 +239,25 @@ def run_scraper_job():
     raw_response = handler.fetch_playlist_contents()
 
     scraped_items = extract_albums_from_graphql(raw_response)
+    
+    # Generate complete list of fragments based on fresh scrape
+    new_fragments = [
+        build_fragment_object(idx, item) 
+        for idx, item in enumerate(scraped_items)
+    ]
+
     current_fragments = load_fragments()
-    updated = False
 
-    for item in scraped_items:
-        spotify_link = f"https://open.spotify.com/album/{item['id']}"
-        
-        # Avoid duplicate fragments
-        exists = any(f.get("spotifyLink") == spotify_link for f in current_fragments)
-        if not exists:
-            frag_num = str(len(current_fragments) + 1).zfill(3)
-            new_fragment = {
-                "id": frag_num,
-                "code": f"fragment_{frag_num}",
-                "title": item["name"],
-                "category": "songs",
-                "recovered": item.get("release_date", "auto-scraped"),
-                "integrity": random.randint(10, 100),
-                "type": item.get("type", "SINGLE"),
-                "coverArt": item.get("cover_art"),  # <-- Dynamic cover art URL
-                "spotify": f"https://open.spotify.com/embed/album/{item['id']}?utm_source=generator&theme=0",
-                "spotifyLink": spotify_link,
-                "note": "Scraped from discography page.",
-                "scrawl": "added dynamically via python scraper."
-            }
-            current_fragments.append(new_fragment)
-            updated = True
-            print(f"[+] Added new fragment: {item['name']}")
+    # Compare key identifiers or full payload to see if anything changed
+    # Comparing spotifyLinks guarantees detection of added/removed/reordered releases
+    current_links = [f.get("spotifyLink") for f in current_fragments]
+    new_links = [f.get("spotifyLink") for f in new_fragments]
 
-    if updated:
-        save_fragments(current_fragments)
-        print("[Scraper Task] Local fragments.json updated.")
+    if current_links != new_links:
+        save_fragments(new_fragments)
+        print(f"[Scraper Task] Differences detected. Recreated {DB_FILE} with {len(new_fragments)} items.")
     else:
-        print("[Scraper Task] No new releases found.")
+        print("[Scraper Task] No changes detected. File untouched.")
 
 # ==========================================
 # FLASK API ENDPOINTS

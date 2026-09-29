@@ -15,4 +15,5 @@ export interface FragmentItem {
   spotifyLink: string;
   note?: string;
   scrawl?: string;
+  isNew: boolean;
 }
